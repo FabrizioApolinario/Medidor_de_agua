@@ -1,0 +1,87 @@
+#include <ESP32Firebase.h>
+
+#define _SSID "Wifi"          // Your WiFi SSID
+#define _PASSWORD "Password"      // Your WiFi Password
+#define FIREBASE_HOST "link firebase"
+int trig = 32;     
+int eco = 34;      
+int duracion;     
+int distancia;
+
+int fireStatus = 0;
+
+
+
+Firebase firebase(FIREBASE_HOST);
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(15, OUTPUT); 
+  pinMode(trig, OUTPUT);
+  pinMode(eco, INPUT);   
+  
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  delay(1000);
+
+  // Connect to WiFi
+  Serial.println();
+  Serial.println();
+  Serial.print("Connecting to: ");
+  Serial.println(_SSID);
+  WiFi.begin(_SSID, _PASSWORD);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print("-");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi Connected");
+
+  // Print the IP address
+  Serial.print("IP Address: ");
+  Serial.print("http://");
+  Serial.print(WiFi.localIP());
+  Serial.println("/");
+
+  
+}
+
+void loop() {
+  fireStatus = firebase.getInt("PRESS_STATUS");
+  if(fireStatus == 1 ){
+    Serial.println("PRESS ON");
+    digitalWrite(15, HIGH);
+    delay(500);
+    
+  }
+  else if(fireStatus == 0 ){
+    Serial.println("PRESS OFF");
+    digitalWrite(15, LOW);
+    delay(500);
+  }
+  
+  digitalWrite(trig, HIGH);
+  delay(1);
+  digitalWrite(trig, LOW);
+ 
+  duracion = pulseIn(eco, HIGH);  
+  distancia = duracion / 58.2;   
+
+  Serial.print(distancia);
+  Serial.println(" cm");
+  firebase.setInt("distance",distancia);
+  delay(500);
+
+  int adc_MQ = analogRead(5); 
+  float voltaje = adc_MQ * (5.0 / 1023.0); 
+  Serial.print(adc_MQ);
+  firebase.setInt("MQ7",adc_MQ); 
+  Serial.print("    voltaje:");
+  Serial.println(voltaje);
+  delay(500);
+
+
+ }
+  
